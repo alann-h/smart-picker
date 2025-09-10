@@ -11,21 +11,12 @@ export const postRouter = createTRPCRouter({
       };
     }),
 
-  create: publicProcedure
-    .input(z.object({ name: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
-      return ctx.db.post.create({
-        data: {
-          name: input.name,
-        },
-      });
-    }),
-
-  getLatest: publicProcedure.query(async ({ ctx }) => {
-    const post = await ctx.db.post.findFirst({
-      orderBy: { createdAt: "desc" },
-    });
-
-    return post ?? null;
+  // Simple test to verify database connection
+  testConnection: publicProcedure.query(async ({ ctx }) => {
+    const companyCount = await ctx.db.company.count();
+    return {
+      message: "Database connected successfully!",
+      companyCount,
+    };
   }),
 });

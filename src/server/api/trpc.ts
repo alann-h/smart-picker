@@ -6,11 +6,12 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-import { initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { db } from "~/server/db";
+import { getSession } from "~/lib/session";
 
 /**
  * 1. CONTEXT
@@ -104,3 +105,52 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * are logged in.
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
+
+/**
+ * Protected (authenticated) procedure
+ *
+ * If you want a query or mutation to ONLY be accessible to logged in users, use this. It verifies
+ * the session is valid and guarantees `ctx.session.user` is not null.
+ *
+ * @see https://trpc.io/docs/procedures
+ */
+export const protectedProcedure = t.procedure.use(timingMiddleware).use(async ({ ctx, next }) => {
+  const session = await getSession();
+  
+  if (!session.userId || !session.companyId) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Authentication required. Please log in.",
+    });
+  }
+
+  return next({
+    ctx: {
+      ...ctx,
+      session: {
+        userId: session.userId,
+        companyId: session.companyId,
+        isAdmin: session.isAdmin ?? false,
+        name: session.name ?? "",
+        email: session.email ?? "",
+        connectionType: session.connectionType,
+      },
+    },
+  });
+});
+
+/**
+ * Admin-only procedure
+ *
+ * This procedure requires the user to be authenticated AND be an admin.
+ */
+export const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
+  if (!ctx.session.isAdmin) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Admin access required",
+    });
+  }
+
+  return next({ ctx });
+});

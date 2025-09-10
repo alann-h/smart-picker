@@ -11,6 +11,20 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
+    QUICKBOOKS_CLIENT_ID: z.string().min(1),
+    QUICKBOOKS_CLIENT_SECRET: z.string().min(1),
+    QUICKBOOKS_REDIRECT_URI: z.string().url(),
+    XERO_CLIENT_ID: z.string().min(1),
+    XERO_CLIENT_SECRET: z.string().min(1),
+    XERO_REDIRECT_URI: z.string(),
+    AWS_REGION: z.string().min(1),
+    AWS_BUCKET_NAME: z.string().min(1),
+    AWS_ACCESS_KEY_ID: z.string().min(1),
+    AWS_SECRET_ACCESS_KEY: z.string().min(1),
+    MAILJET_API_KEY: z.string().min(1),
+    MAILJET_SECRET_KEY: z.string().min(1),
+    AES_SECRET_KEY: z.string().min(32),
+    SESSION_SECRET: z.string().min(32),
   },
 
   /**
@@ -29,7 +43,20 @@ export const env = createEnv({
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
-    // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+    QUICKBOOKS_CLIENT_ID: process.env.QUICKBOOKS_CLIENT_ID,
+    QUICKBOOKS_CLIENT_SECRET: process.env.QUICKBOOKS_CLIENT_SECRET,
+    QUICKBOOKS_REDIRECT_URI: process.env.QUICKBOOKS_REDIRECT_URI,
+    XERO_CLIENT_ID: process.env.XERO_CLIENT_ID,
+    XERO_CLIENT_SECRET: process.env.XERO_CLIENT_SECRET,
+    XERO_REDIRECT_URI: process.env.XERO_REDIRECT_URI,
+    AWS_REGION: process.env.AWS_REGION,
+    AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME,
+    AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
+    MAILJET_API_KEY: process.env.MAILJET_API_KEY,
+    MAILJET_SECRET_KEY: process.env.MAILJET_SECRET_KEY,
+    AES_SECRET_KEY: process.env.AES_SECRET_KEY,
+    SESSION_SECRET: process.env.SESSION_SECRET,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
