@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const caller = createCaller(ctx);
 
     // Handle the OAuth callback
-    const result = await caller.oauth.handleCallback({
+    await caller.oauth.handleCallback({
       url,
       connectionType: 'xero',
     });
@@ -20,13 +20,13 @@ export async function GET(request: NextRequest) {
     frontendCallbackUrl.searchParams.set('provider', 'xero');
     
     return NextResponse.redirect(frontendCallbackUrl);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Xero callback error:', error);
     
     // Redirect to frontend with error
     const frontendCallbackUrl = new URL('/oauth/callback', request.url);
     frontendCallbackUrl.searchParams.set('success', 'false');
-    frontendCallbackUrl.searchParams.set('error', error.message);
+    frontendCallbackUrl.searchParams.set('error', error instanceof Error ? error.message : 'Unknown error');
     frontendCallbackUrl.searchParams.set('provider', 'xero');
     
     return NextResponse.redirect(frontendCallbackUrl);

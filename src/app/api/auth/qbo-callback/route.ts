@@ -5,13 +5,15 @@ import { createTRPCContext } from "~/server/api/trpc";
 export async function GET(request: NextRequest) {
   try {
     const url = request.url;
+    const realmId = request.nextUrl.searchParams.get('realmId');
     const ctx = await createTRPCContext({ headers: request.headers });
     const caller = createCaller(ctx);
 
     // Handle the OAuth callback
-    const result = await caller.oauth.handleCallback({
+    await caller.oauth.handleCallback({
       url,
       connectionType: 'qbo',
+      realmId: realmId ?? undefined,
     });
 
     // Redirect to frontend callback handler

@@ -7,7 +7,7 @@ export interface SessionData {
   isAdmin?: boolean;
   name?: string;
   email?: string;
-  connectionType?: 'qbo' | 'xero';
+  connectionType?: 'qbo' | 'xero' | 'none';
   loginTime?: string;
   userAgent?: string;
   ipAddress?: string;
@@ -46,7 +46,7 @@ export async function createSession(userData: {
   isAdmin: boolean;
   name: string;
   email: string;
-  connectionType?: 'qbo' | 'xero';
+  connectionType?: 'qbo' | 'xero' | 'none';
   rememberMe?: boolean;
 }) {
   const cookieStore = await cookies();

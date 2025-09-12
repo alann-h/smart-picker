@@ -36,17 +36,12 @@ export default function LoginPage() {
       });
       
       // Redirect to dashboard on success
-      router.push("/dashboard");
+      router.push("/oauth-test");
     } catch (err: any) {
       setError(err.message || "Login failed");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleOAuthLogin = (provider: 'qbo' | 'xero') => {
-    // This will be handled by the OAuth buttons
-    // The actual redirect will happen via the tRPC query
   };
 
   return (
