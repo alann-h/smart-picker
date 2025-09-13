@@ -64,18 +64,23 @@ export const oauthRouter = createTRPCRouter({
           });
         }
 
-        // First, try to find company by the new provider's ID
-        const whereClause = connectionType === 'qbo'
-          ? { qboRealmId: (companyInfo as QboCompanyInfo).realmId }
-          : { xeroTenantId: (companyInfo as XeroCompanyInfo).tenantId };
-          
-        let company = await ctx.db.company.findFirst({ where: whereClause });
+        // Find company by either provider ID or company name (handles switching providers)
+        // First try by provider ID, then by company name (including disconnected companies)
+        let company = connectionType === 'qbo'
+          ? await ctx.db.company.findFirst({ 
+              where: { qboRealmId: (companyInfo as QboCompanyInfo).realmId } 
+            })
+          : await ctx.db.company.findFirst({ 
+              where: { xeroTenantId: (companyInfo as XeroCompanyInfo).tenantId } 
+            });
 
-        // If not found by provider ID, check if there's a company with the same name
-        // (this handles switching from one provider to another)
+        // If not found by provider ID, try by company name (this handles switching providers)
         company ??= await ctx.db.company.findFirst({ 
           where: { companyName: companyInfo.companyName } 
         });
+        
+        console.log('Company lookup result:', company ? `Found company ${company.id}` : 'No company found');
+        console.log('Looking for company name:', companyInfo.companyName);
 
         // Prepare company data with proper token clearing
         const companyData = {
@@ -240,7 +245,7 @@ export const oauthRouter = createTRPCRouter({
             throw new TRPCError({ code: 'BAD_REQUEST', message: 'Not connected to an OAuth provider.' });
         }
         
-        return await oauthService.getValidToken(session.companyId, company.connectionType, ctx.db);
+        return await oauthService.getValidToken(company, company.connectionType, ctx.db);
     }),
 
   getRemoteUserInfo: protectedProcedure
@@ -251,7 +256,7 @@ export const oauthRouter = createTRPCRouter({
             throw new TRPCError({ code: 'BAD_REQUEST', message: 'Not connected to an OAuth provider.' });
         }
         
-        const token = await oauthService.getValidToken(session.companyId, company.connectionType, ctx.db);
+        const token = await oauthService.getValidToken(company, company.connectionType, ctx.db);
         
         if (company.connectionType === 'qbo') {
             return await oauthService.getQBOUserInfo(token as QboToken);

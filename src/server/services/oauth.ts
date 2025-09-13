@@ -210,6 +210,7 @@ export class OAuthService {
    */
   async getXeroCompanyInfo(token: XeroToken): Promise<XeroCompanyInfo | null> {
     const xeroClient = this.initializeXero();
+    await xeroClient.initialize(); // Ensure openIdClient is initialized
     
     try {
       xeroClient.setTokenSet(token);
@@ -257,6 +258,7 @@ export class OAuthService {
    */
   async getXeroUserInfo(token: XeroToken): Promise<OAuthUserInfo> {
     const xeroClient = this.initializeXero();
+    await xeroClient.initialize(); // Ensure openIdClient is initialized
     xeroClient.setTokenSet(token);
 
     try {
@@ -320,6 +322,7 @@ export class OAuthService {
    */
   async refreshXeroToken(token: XeroToken): Promise<XeroToken> {
     const xeroClient = this.initializeXero();
+    await xeroClient.initialize(); // Ensure openIdClient is initialized
     
     try {
       xeroClient.setTokenSet(token);
@@ -360,6 +363,7 @@ export class OAuthService {
    */
   async revokeXeroToken(token: XeroToken): Promise<void> {
     const xeroClient = this.initializeXero();
+    await xeroClient.initialize(); // Ensure openIdClient is initialized
     xeroClient.setTokenSet(token);
     try {
       await xeroClient.revokeToken();
@@ -396,14 +400,7 @@ export class OAuthService {
   /**
    * Gets a valid token for a company, refreshing it if necessary.
    */
-  async getValidToken(companyId: string, connectionType: ConnectionType, prisma: PrismaClient = db): Promise<TokenData> {
-    const company = await prisma.company.findUnique({
-      where: { id: companyId },
-    });
-
-    if (!company) {
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'Company not found' });
-    }
+  async getValidToken(company: { id: string; qboTokenData: string | null; xeroTokenData: string | null }, connectionType: ConnectionType, prisma: PrismaClient = db): Promise<TokenData> {
 
     const tokenDataString = connectionType === 'qbo' ? company.qboTokenData : company.xeroTokenData;
 
@@ -428,7 +425,7 @@ export class OAuthService {
     // Store the new token
     const tokenField = connectionType === 'qbo' ? 'qboTokenData' : 'xeroTokenData';
     await prisma.company.update({
-      where: { id: companyId },
+      where: { id: company.id },
       data: {
         [tokenField]: JSON.stringify(refreshedToken),
       },
