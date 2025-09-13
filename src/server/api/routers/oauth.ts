@@ -16,10 +16,10 @@ export const oauthRouter = createTRPCRouter({
       try {
         const authUri = oauthService.getQBOAuthUri(input.rememberMe);
         return { authUri };
-      } catch (error: any) {
+      } catch (error: unknown) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to generate QBO auth URI: ${error.message}`,
+          message: `Failed to generate QBO auth URI: ${error instanceof Error ? error.message : 'Unknown error'}`,
         });
       }
     }),
@@ -31,10 +31,10 @@ export const oauthRouter = createTRPCRouter({
       try {
         const authUri = await oauthService.getXeroAuthUri(input.rememberMe);
         return { authUri };
-      } catch (error: any) {
+      } catch (error: unknown) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to generate Xero auth URI: ${error.message}`,
+          message: `Failed to generate Xero auth URI: ${error instanceof Error ? error.message : 'Unknown error'}`,
         });
       }
     }),
@@ -48,8 +48,7 @@ export const oauthRouter = createTRPCRouter({
     }))
     .mutation(async ({ input, ctx }) => {
       try {
-        const { url, connectionType } = input;
-        
+        const { url, connectionType } = input; 
         const token = connectionType === 'qbo'
           ? await oauthService.handleQBOCallback(url, input.realmId)
           : await oauthService.handleXeroCallback(url);
@@ -65,18 +64,38 @@ export const oauthRouter = createTRPCRouter({
           });
         }
 
+        // First, try to find company by the new provider's ID
         const whereClause = connectionType === 'qbo'
           ? { qboRealmId: (companyInfo as QboCompanyInfo).realmId }
           : { xeroTenantId: (companyInfo as XeroCompanyInfo).tenantId };
           
         let company = await ctx.db.company.findFirst({ where: whereClause });
 
+        // If not found by provider ID, check if there's a company with the same name
+        // (this handles switching from one provider to another)
+        company ??= await ctx.db.company.findFirst({ 
+          where: { companyName: companyInfo.companyName } 
+        });
+
+        // Prepare company data with proper token clearing
         const companyData = {
           companyName: companyInfo.companyName,
           connectionType: connectionType,
           ...(connectionType === 'qbo'
-            ? { qboTokenData: JSON.stringify(token), qboRealmId: (companyInfo as QboCompanyInfo).realmId }
-            : { xeroTokenData: JSON.stringify(token), xeroTenantId: (companyInfo as XeroCompanyInfo).tenantId }
+            ? { 
+                qboTokenData: JSON.stringify(token), 
+                qboRealmId: (companyInfo as QboCompanyInfo).realmId,
+                // Clear Xero data when switching to QBO
+                xeroTokenData: null,
+                xeroTenantId: null
+              }
+            : { 
+                xeroTokenData: JSON.stringify(token), 
+                xeroTenantId: (companyInfo as XeroCompanyInfo).tenantId,
+                // Clear QBO data when switching to Xero
+                qboTokenData: null,
+                qboRealmId: null
+              }
           ),
         };
 
@@ -150,11 +169,11 @@ export const oauthRouter = createTRPCRouter({
             isAdmin: user.isAdmin,
           },
         };
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('OAuth callback error:', error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `OAuth callback failed: ${error.message}`,
+          message: `OAuth callback failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         });
       }
     }),
@@ -175,14 +194,14 @@ export const oauthRouter = createTRPCRouter({
 
         try {
             if (input.connectionType === 'qbo' && company.qboTokenData) {
-                const token = JSON.parse(company.qboTokenData);
+                const token = JSON.parse(company.qboTokenData) as QboToken;
                 await oauthService.revokeQBOToken(token);
                 await ctx.db.company.update({
                     where: { id: session.companyId },
                     data: { qboTokenData: null, qboRealmId: null, connectionType: 'none' },
                 });
             } else if (input.connectionType === 'xero' && company.xeroTokenData) {
-                const token = JSON.parse(company.xeroTokenData);
+                const token = JSON.parse(company.xeroTokenData) as XeroToken;
                 await oauthService.revokeXeroToken(token);
                 await ctx.db.company.update({
                     where: { id: session.companyId },
@@ -190,11 +209,11 @@ export const oauthRouter = createTRPCRouter({
                 });
             }
             return { success: true };
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(`Failed to disconnect ${input.connectionType}:`, error);
             throw new TRPCError({
                 code: 'INTERNAL_SERVER_ERROR',
-                message: `Failed to disconnect: ${error.message}`,
+                message: `Failed to disconnect: ${error instanceof Error ? error.message : 'Unknown error'}`,
             });
         }
     }),
@@ -210,7 +229,7 @@ export const oauthRouter = createTRPCRouter({
         const tokenDataString = company.connectionType === 'qbo' ? company.qboTokenData : company.xeroTokenData;
         if (!tokenDataString) return null;
 
-        return JSON.parse(tokenDataString);
+        return JSON.parse(tokenDataString) as QboToken | XeroToken;
     }),
 
   refreshToken: protectedProcedure

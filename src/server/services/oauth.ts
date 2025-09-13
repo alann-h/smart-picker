@@ -108,7 +108,7 @@ export class OAuthService {
         expires_in: token.expires_in,
         x_refresh_token_expires_in: token.x_refresh_token_expires_in,
         scope: token.scope,
-        realmId: realmIdFromQuery ?? token.realmId, // Prioritize realmId from query, fallback to token
+        realmId: realmIdFromQuery ?? token.realmId,
         created_at: token.createdAt
       };
     } catch (error: unknown) {
@@ -121,8 +121,27 @@ export class OAuthService {
    * Handle Xero callback
    */
   async handleXeroCallback(url: string): Promise<XeroToken> {
-    const xeroClient = this.initializeXero();
+    console.log('Xero callback URL:', url);
     try {
+      const urlObj = new URL(url);
+      const state = urlObj.searchParams.get('state');
+      
+      const xeroClient = new XeroClient({
+        clientId: env.XERO_CLIENT_ID,
+        clientSecret: env.XERO_CLIENT_SECRET,
+        redirectUris: [env.XERO_REDIRECT_URI],
+        scopes: [
+          'offline_access',
+          'accounting.transactions.read',
+          'accounting.contacts.read',
+          'accounting.settings.read',
+          'profile',
+          'email',
+          'openid'
+        ],
+        state: state ?? undefined
+      });
+      
       const tokenSet = await xeroClient.apiCallback(url);
       const tenants = await xeroClient.updateTenants(false);
       
@@ -169,7 +188,8 @@ export class OAuthService {
       
       const response = await oauthClient.makeApiCall({ url });
       
-      const companyInfo = response.json?.QueryResponse?.CompanyInfo?.[0];
+      const responseJson = response.json as { QueryResponse?: { CompanyInfo?: Array<{ CompanyName?: string }> } } | undefined;
+      const companyInfo = responseJson?.QueryResponse?.CompanyInfo?.[0];
 
       if (!companyInfo?.CompanyName) {
         throw new Error('No company name found in QBO response');
@@ -257,9 +277,9 @@ export class OAuthService {
       }
 
       return {
-        email: mainUser.emailAddress!,
-        givenName: mainUser.firstName!,
-        familyName: mainUser.lastName!,
+        email: mainUser.emailAddress,
+        givenName: mainUser.firstName,
+        familyName: mainUser.lastName ?? '',
       };
     } catch (error) {
       console.error('Error getting Xero user info:', error);
