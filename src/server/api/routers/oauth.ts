@@ -78,9 +78,6 @@ export const oauthRouter = createTRPCRouter({
         company ??= await ctx.db.company.findFirst({ 
           where: { companyName: companyInfo.companyName } 
         });
-        
-        console.log('Company lookup result:', company ? `Found company ${company.id}` : 'No company found');
-        console.log('Looking for company name:', companyInfo.companyName);
 
         // Prepare company data with proper token clearing
         const companyData = {

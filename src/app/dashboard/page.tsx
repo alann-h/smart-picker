@@ -7,7 +7,10 @@ import { type TokenData, type OAuthUserInfo } from "~/lib/types";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { data: userStatus, isLoading } = api.auth.getUserStatus.useQuery();
+  const { data: userStatus, isLoading } = api.auth.getUserStatus.useQuery(undefined, {
+    staleTime: 10 * 60 * 1000, // 10 minutes - user status rarely changes
+    refetchOnWindowFocus: false,
+  });
   const logoutMutation = api.auth.logout.useMutation({
     onSuccess: () => {
       router.push("/login");

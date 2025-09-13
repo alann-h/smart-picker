@@ -121,7 +121,6 @@ export class OAuthService {
    * Handle Xero callback
    */
   async handleXeroCallback(url: string): Promise<XeroToken> {
-    console.log('Xero callback URL:', url);
     try {
       const urlObj = new URL(url);
       const state = urlObj.searchParams.get('state');
