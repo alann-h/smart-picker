@@ -272,7 +272,7 @@ const TopBar: React.FC<TopBarProps> = ({ isPublic = false }) => {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white font-bold">
                 SP
               </div>
-              <span className="text-xl font-bold text-blue-600">Smart Picker</span>
+              <span className="hidden sm:block text-xl font-bold text-blue-600">Smart Picker</span>
             </div>
 
             {/* Navigation - Far Right */}

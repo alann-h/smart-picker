@@ -1,5 +1,5 @@
-import LandingPageOptimized from "~/app/_components/landing/LandingPageOptimized";
+import LandingPage from "~/app/_components/landing/LandingPage";
 
 export default function Home() {
-  return <LandingPageOptimized />;
+  return <LandingPage />;
 }
