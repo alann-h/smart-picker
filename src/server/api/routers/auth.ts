@@ -8,17 +8,133 @@ import { oauthService } from "~/server/services/oauth";
 import validator from "validator";
 import { type ConnectionType } from "~/lib/types";
 
-// Placeholder for email service
+// Email service using Mailjet
+import Mailjet from 'node-mailjet';
+
+const mailjet = Mailjet.apiConnect(
+  process.env.MAILJET_API_KEY!,
+  process.env.MAILJET_SECRET_KEY!
+);
+
 const emailService = {
   sendPasswordResetEmail: async (email: string, token: string, name: string) => {
-    console.log(`Sending password reset email to ${email} with token ${token} for user ${name}`);
-    // In a real app, you would use a service like Nodemailer, SendGrid, or AWS SES
-    // For now, we'll just log it to the console.
-    await Promise.resolve();
+    try {
+      const resetUrl = `${process.env.FRONTEND_URL ?? 'http://localhost:3000'}/reset-password?token=${token}`;
+      
+      const request = mailjet.post('send', { version: 'v3.1' }).request({
+        Messages: [
+          {
+            From: {
+              Email: process.env.FROM_EMAIL ?? 'noreply@smartpicker.au',
+              Name: 'Smart Picker'
+            },
+            To: [
+              {
+                Email: email,
+                Name: name ?? 'User'
+              }
+            ],
+            Subject: 'Reset Your Password - Smart Picker',
+            TextPart: `Hello ${name ?? 'User'},
+
+            You requested to reset your password for your Smart Picker account.
+
+            Click the link below to reset your password:
+            ${resetUrl}
+
+            This link will expire in 1 hour for security reasons.
+
+            If you didn't request this password reset, please ignore this email.
+
+            Best regards,
+            Smart Picker Team`,
+            HTMLPart: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #333;">Reset Your Password</h2>
+                <p>Hello ${name ?? 'User'},</p>
+                <p>You requested to reset your password for your Smart Picker account.</p>
+                <p>Click the button below to reset your password:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="${resetUrl}" 
+                     style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                    Reset Password
+                  </a>
+                </div>
+                <p style="color: #666; font-size: 14px;">
+                  This link will expire in 1 hour for security reasons.
+                </p>
+                <p style="color: #666; font-size: 14px;">
+                  If you didn't request this password reset, please ignore this email.
+                </p>
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                <p style="color: #999; font-size: 12px;">
+                  Best regards,<br>
+                  Smart Picker Team
+                </p>
+              </div>
+            `
+          }
+        ]
+      });
+
+      const response = await request;
+      return response.body;
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      throw new Error('Failed to send password reset email');
+    }
   },
+  
   sendPasswordResetConfirmationEmail: async (email: string, name: string) => {
-    console.log(`Sending password reset confirmation to ${email} for user ${name}`);
-    await Promise.resolve();
+    try {
+      const request = mailjet.post('send', { version: 'v3.1' }).request({
+        Messages: [
+          {
+            From: {
+              Email: process.env.FROM_EMAIL ?? 'noreply@smartpicker.au',
+              Name: 'Smart Picker'
+            },
+            To: [
+              {
+                Email: email,
+                Name: name ?? 'User'
+              }
+            ],
+            Subject: 'Password Successfully Reset - Smart Picker',
+            TextPart: `Hello ${name ?? 'User'},
+
+            Your password has been successfully reset for your Smart Picker account.
+
+            If you didn't make this change, please contact our support team immediately.
+
+            Best regards,
+            Smart Picker Team`,
+            HTMLPart: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #28a745;">Password Successfully Reset</h2>
+                <p>Hello ${name ?? 'User'},</p>
+                <p>Your password has been successfully reset for your Smart Picker account.</p>
+                <div style="background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                  <strong>Security Notice:</strong> If you didn't make this change, please contact our support team immediately.
+                </div>
+                <p>You can now log in with your new password.</p>
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+                <p style="color: #999; font-size: 12px;">
+                  Best regards,<br>
+                  Smart Picker Team
+                </p>
+              </div>
+            `
+          }
+        ]
+      });
+
+      const response = await request;
+      return response.body;
+    } catch (error) {
+      console.error('Error sending password reset confirmation email:', error);
+      throw new Error('Failed to send password reset confirmation email');
+    }
   }
 };
 
@@ -36,7 +152,7 @@ export const authRouter = createTRPCRouter({
       const { email, password, rememberMe } = input;
       const normalisedEmail = validator.normalizeEmail(email) as string;
 
-      let user = await ctx.db.user.findUnique({
+      const user = await ctx.db.user.findUnique({
         where: { normalisedEmail },
         include: { company: true },
       });
@@ -79,7 +195,7 @@ export const authRouter = createTRPCRouter({
       let reAuthRequired = false;
       if (user.company && user.company.connectionType !== 'none') {
           try {
-              await oauthService.getValidToken(user.companyId!, user.company.connectionType as ConnectionType, ctx.db);
+              await oauthService.getValidToken(user.company, user.company.connectionType as ConnectionType, ctx.db);
           } catch (error) {
               console.error('Token refresh failed during login:', error);
               reAuthRequired = true;
@@ -211,9 +327,17 @@ export const authRouter = createTRPCRouter({
           throw new TRPCError({ code: 'FORBIDDEN', message: 'You can only update your own profile.' });
       }
       
-      const dataToUpdate: any = { ...updateData };
+      const dataToUpdate: {
+        givenName?: string;
+        familyName?: string;
+        displayEmail?: string;
+        normalisedEmail?: string;
+        isAdmin?: boolean;
+      } = { ...updateData };
+      
       if (updateData.email) {
-          dataToUpdate.normalisedEmail = validator.normalizeEmail(updateData.email);
+          dataToUpdate.normalisedEmail = validator.normalizeEmail(updateData.email) as string;
+          dataToUpdate.displayEmail = updateData.email;
       }
 
       const user = await ctx.db.user.update({
