@@ -1,8 +1,4 @@
-"use client";
-
 import Image from "next/image";
-import AnimatedSection from "./AnimatedSection";
-import InteractiveButton from "./InteractiveButton";
 
 // --- Icons ---
 const ArrowForwardIcon: React.FC = () => (
@@ -49,57 +45,43 @@ const Hero: React.FC = () => {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Text Content */}
           <div className="text-center lg:text-left">
-            <AnimatedSection direction="scale" delay={0.1} duration={0.6}>
-              <div className="inline-flex items-center bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 text-sm font-bold px-4 py-2 rounded-full mb-6 shadow-lg border border-blue-200">
-                <BarcodeIcon className="w-4 h-4 mr-2" />
-                Inventory Management, Reimagined
-              </div>
-            </AnimatedSection>
+            <div className="inline-flex items-center bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 text-sm font-bold px-4 py-2 rounded-full mb-6 shadow-lg border border-blue-200">
+              <BarcodeIcon className="w-4 h-4 mr-2" />
+              Inventory Management, Reimagined
+            </div>
 
-            <AnimatedSection direction="right" delay={0.2} duration={0.8}>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
-                Goodbye mistakes,
-                <br />
-                <span className="text-blue-600">
-                  hello Smart Picker.
-                </span>
-              </h1>
-            </AnimatedSection>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6">
+              Goodbye mistakes,
+              <br />
+              <span className="text-blue-600">
+                hello Smart Picker.
+              </span>
+            </h1>
 
-            <AnimatedSection direction="left" delay={0.3} duration={0.7}>
-              <p className="text-lg md:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed">
-                Streamline your warehouse operations with our intelligent picking
-                system. Increase accuracy, save time, and manage stock from any
-                device, anywhere.
-              </p>
-            </AnimatedSection>
+            <p className="text-lg md:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed">
+              Streamline your warehouse operations with our intelligent picking
+              system. Increase accuracy, save time, and manage stock from any
+              device, anywhere.
+            </p>
 
-            <AnimatedSection direction="scale" delay={0.4} duration={0.6}>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <InteractiveButton
-                  href="/login"
-                  animationType="bounce"
-                  intensity="strong"
-                  variant="primary"
-                  className="shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
-                >
-                  Get Started Free <ArrowForwardIcon />
-                </InteractiveButton>
-                <InteractiveButton
-                  href="/demo"
-                  animationType="glow"
-                  intensity="medium"
-                  variant="secondary"
-                  className="shadow-lg hover:shadow-xl"
-                >
-                  Watch Demo
-                </InteractiveButton>
-              </div>
-            </AnimatedSection>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <a
+                href="/login"
+                className="flex items-center justify-center px-6 py-3 rounded-lg text-base font-semibold bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-xl hover:shadow-2xl transition-all duration-200"
+              >
+                Get Started Free <ArrowForwardIcon />
+              </a>
+              <a
+                href="/demo"
+                className="flex items-center justify-center px-6 py-3 rounded-lg text-base font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                Watch Demo
+              </a>
+            </div>
           </div>
 
           {/* Image */}
-          <AnimatedSection delay={0.3} direction="scale" duration={1.0} className="hidden lg:block">
+          <div className="hidden lg:block">
             <div className="relative group">
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
               <div className="relative">
@@ -109,11 +91,12 @@ const Hero: React.FC = () => {
                   className="rounded-2xl shadow-2xl border border-gray-100 transform group-hover:scale-105 transition duration-700"
                   width={800}
                   height={600}
-                  priority={false}
+                  priority={true}
+                  loading="eager"
                 />
               </div>
             </div>
-          </AnimatedSection>
+          </div>
         </div>
       </div>
     </section>
