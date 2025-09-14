@@ -5,6 +5,7 @@ import { quoteRouter } from "./routers/quote";
 import { authRouter } from "./routers/auth";
 import { oauthRouter } from "./routers/oauth";
 import { companyRouter } from "./routers/company";
+import { customerRouter } from "./routers/customer";
 
 /**
  * This is the primary router for your server.
@@ -18,6 +19,7 @@ export const appRouter = createTRPCRouter({
   auth: authRouter,
   oauth: oauthRouter,
   company: companyRouter,
+  customer: customerRouter,
 });
 
 // export type definition of API
