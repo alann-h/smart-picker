@@ -5,6 +5,23 @@
 import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
-const config = {};
+const config = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'www.smartpicker.au',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'smartpicker-images.s3.ap-southeast-1.amazonaws.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
+};
 
 export default config;
