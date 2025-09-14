@@ -3,13 +3,7 @@ import { AccessError } from '~/lib/errors';
 import type { Customer, LocalCustomer, QBOCustomer } from '~/types/customer';
 import type { ConnectionType } from '~/lib/types';
 
-// Mock services - you'll need to implement these based on your existing services
-const tokenService = {
-  getOAuthClient: async (_companyId: string, _connectionType: ConnectionType) => {
-    // TODO: Implement based on your existing token service
-    throw new Error('Token service not implemented');
-  }
-};
+import { tokenService } from './token';
 
 const authSystem = {
   getXeroTenantId: async (_oauthClient: unknown) => {

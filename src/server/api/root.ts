@@ -6,6 +6,8 @@ import { authRouter } from "./routers/auth";
 import { oauthRouter } from "./routers/oauth";
 import { companyRouter } from "./routers/company";
 import { customerRouter } from "./routers/customer";
+import { runRouter } from "./routers/run";
+import { tokenRouter } from "./routers/token";
 
 /**
  * This is the primary router for your server.
@@ -20,6 +22,8 @@ export const appRouter = createTRPCRouter({
   oauth: oauthRouter,
   company: companyRouter,
   customer: customerRouter,
+  run: runRouter,
+  token: tokenRouter,
 });
 
 // export type definition of API
