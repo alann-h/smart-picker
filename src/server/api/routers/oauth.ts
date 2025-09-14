@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "~/server/api/trpc";
 import { TRPCError } from "@trpc/server";
 import { oauthService } from "~/server/services/oauth";
+import { setUserPermissions } from "~/server/services/user-creation";
 import { createSession } from "~/lib/session";
 import validator from 'validator';
 import { type QboCompanyInfo, type XeroCompanyInfo, type QboToken, type XeroToken } from "~/lib/types";
@@ -145,6 +146,9 @@ export const oauthRouter = createTRPCRouter({
               companyId: company.id,
             },
           });
+
+          // Set default permissions for the new OAuth user
+          await setUserPermissions(user.id, company.id, user.isAdmin, 'oauth-registration');
         }
 
         // Create session

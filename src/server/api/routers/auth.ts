@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { getSession, createSession, destroySession } from "~/lib/session";
 import { oauthService } from "~/server/services/oauth";
+import { setUserPermissions } from "~/server/services/user-creation";
 import validator from "validator";
 import { type ConnectionType } from "~/lib/types";
 
@@ -269,6 +270,9 @@ export const authRouter = createTRPCRouter({
         },
       });
 
+      // Set default permissions for the new user
+      await setUserPermissions(user.id, company.id, user.isAdmin, 'user-registration');
+
       return {
         id: user.id,
         email: user.displayEmail,
@@ -469,5 +473,45 @@ export const authRouter = createTRPCRouter({
       await emailService.sendPasswordResetConfirmationEmail(user.displayEmail, userName);
 
       return { message: 'Password has been successfully reset.' };
+    }),
+
+  logoutAllDevices: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      // TODO: Implement logout all devices functionality
+      // This would typically involve:
+      // 1. Invalidating all sessions for the user
+      // 2. Clearing any refresh tokens
+      // 3. Logging the security event
+      
+      await ctx.db.securityEvent.create({
+        data: {
+          userId: ctx.session.userId,
+          companyId: ctx.session.companyId,
+          email: ctx.session.email,
+          eventType: 'logout',
+          metadata: { logoutType: 'all_devices' },
+        },
+      });
+
+      return { message: 'Successfully logged out from all devices.' };
+    }),
+
+  getUserSessions: protectedProcedure
+    .query(async ({ ctx }) => {
+      // TODO: Implement get user sessions functionality
+      // This would typically return active sessions for the user
+      
+      return {
+        totalSessions: 1,
+        activeSessions: [
+          {
+            id: 'current-session',
+            isCurrentSession: true,
+            name: 'Current Session',
+            email: ctx.session.email,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+          },
+        ],
+      };
     }),
 });

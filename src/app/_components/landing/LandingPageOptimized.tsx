@@ -1,5 +1,6 @@
 import { type Metadata } from "next";
 import Hero from "./Hero";
+import Layout from "../Layout";
 
 export const metadata: Metadata = {
   title: "Smart Picker - Efficient Order Preparation | Barcode Scanning App",
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 
 const LandingPageOptimized: React.FC = () => {
   return (
-    <main className="bg-white font-sans">
+    <Layout isPublic={true}>
       {/* --- HERO SECTION ONLY --- */}
       <Hero />
       
@@ -73,7 +74,7 @@ const LandingPageOptimized: React.FC = () => {
           </a>
         </div>
       </section>
-    </main>
+    </Layout>
   );
 };
 
